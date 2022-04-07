@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS `mydb`.`Kuitti` (
   `idTuote` INT NULL,
   PRIMARY KEY (`idKuitti`),
   INDEX `idTuote_idx` (`idTuote` ASC) VISIBLE,
-  CONSTRAINT `tuotteet`
+  CONSTRAINT `Tuotteet`
     FOREIGN KEY (`idTuote`)
     REFERENCES `mydb`.`Tuote` (`idTuote`)
     ON DELETE NO ACTION
@@ -42,31 +42,35 @@ DROP TABLE IF EXISTS `mydb`.`Ravintola` ;
 
 CREATE TABLE IF NOT EXISTS `mydb`.`Ravintola` (
   `idRavintola` INT NOT NULL AUTO_INCREMENT,
-  `menu` INT NULL,
-  `tilaukset` INT NULL,
+  `Omistaja` INT NULL,
+  `Menu` INT NULL,
+  `Tilaukset` INT NULL,
   `Nimi` VARCHAR(120) NOT NULL,
   `Osoite` VARCHAR(100) NOT NULL,
   `Paikkakunta` VARCHAR(120) NOT NULL,
-  `saldo` DECIMAL NULL,
-  `kuva` VARCHAR(255) NULL,
-  `kuvaus` VARCHAR(255) NULL,
-  `aukioloaika` DATE NULL,
-  `hitataso` ENUM('€', '€€', '€€€', '€€€€') NULL,
-  `tyyppi` ENUM('b', 'ff', 'fc', 'cd', 'fd') NULL,
-  `Ravintolacol` VARCHAR(45) NULL,
-  `salasana` VARCHAR(256) NULL,
-  `Ravintolacol1` VARCHAR(45) NULL,
+  `Saldo` DECIMAL NULL,
+  `Kuva` VARCHAR(255) NULL,
+  `Kuvaus` VARCHAR(255) NULL,
+  `Aukioloaika` VARCHAR(255) NULL,
+  `Hintataso` ENUM('e', 'ee', 'eee', 'eeee') NULL,
+  `Tyyppi` ENUM('b', 'ff', 'fc', 'cd', 'fd') NULL,
   PRIMARY KEY (`idRavintola`),
-  INDEX `idTuote_idx` (`menu` ASC) VISIBLE,
-  INDEX `idKuitti_idx` (`tilaukset` ASC) VISIBLE,
-  CONSTRAINT `menu tuotteet`
-    FOREIGN KEY (`menu`)
+  INDEX `idTuote_idx` (`Menu` ASC) VISIBLE,
+  INDEX `idKuitti_idx` (`Tilaukset` ASC) VISIBLE,
+  INDEX `idKayttaja_idx` (`Omistaja` ASC) VISIBLE,
+  CONSTRAINT `Menu Tuotteet`
+    FOREIGN KEY (`Menu`)
     REFERENCES `mydb`.`Tuote` (`idTuote`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
-  CONSTRAINT `tilatut tuotteet`
-    FOREIGN KEY (`tilaukset`)
+  CONSTRAINT `Tilatut Tuotteet`
+    FOREIGN KEY (`Tilaukset`)
     REFERENCES `mydb`.`Tilaus` (`idTilaus`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `Omistajat`
+    FOREIGN KEY idKayttaja_idx (`Omistaja`)
+    REFERENCES `mydb`.`Kayttaja` (`idKayttaja`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
@@ -79,10 +83,10 @@ DROP TABLE IF EXISTS `mydb`.`Tilaus` ;
 
 CREATE TABLE IF NOT EXISTS `mydb`.`Tilaus` (
   `idTilaus` INT NOT NULL AUTO_INCREMENT,
-  `Toimitusaika` DATE NULL,
+  `Toimitusaika` VARCHAR(255) NULL,
   `Hinta` DECIMAL NOT NULL,
   `idKuitti` INT NULL,
-  `tila` ENUM('valmistumassa', 'toimituksessa', 'toimitettu', 'vastaanotettu') NULL,
+  `Tila` ENUM('valmistumassa', 'toimituksessa', 'toimitettu', 'vastaanotettu') NULL,
   PRIMARY KEY (`idTilaus`),
   INDEX `idKuitti_idx` (`idKuitti` ASC) VISIBLE,
   CONSTRAINT `tilauksen kuitti`
@@ -100,51 +104,63 @@ DROP TABLE IF EXISTS `mydb`.`Tuote` ;
 
 CREATE TABLE IF NOT EXISTS `mydb`.`Tuote` (
   `idTuote` INT NOT NULL AUTO_INCREMENT,
-  `nimi` VARCHAR(100) NOT NULL,
-  `kuvaus` VARCHAR(255) NULL,
-  `kategoria` ENUM('p', 'j', 'a') NOT NULL,
-  `hinta` DECIMAL NOT NULL,
-  `kuva` VARCHAR(255) NULL,
-  PRIMARY KEY (`idTuote`))
+  `Nimi` VARCHAR(100) NOT NULL,
+  `Kuvaus` VARCHAR(255) NULL,
+  `Kategoria` ENUM('p', 'j', 'a') NOT NULL,
+  `Hinta` DECIMAL NOT NULL,
+  `Kuva` VARCHAR(255) NULL,
+  `Valmistaja` INT NOT NULL,
+  PRIMARY KEY (`idTuote`),
+  CONSTRAINT `Tuotteen valmistaja`
+    FOREIGN KEY (`Valmistaja`)
+    REFERENCES `mydb`.`Ravintola` (`idRavintola`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
 ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `mydb`.`kayttaja`
+-- Table `mydb`.`Kayttaja`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mydb`.`kayttaja` ;
+DROP TABLE IF EXISTS `mydb`.`Kayttaja` ;
 
-CREATE TABLE IF NOT EXISTS `mydb`.`kayttaja` (
+CREATE TABLE IF NOT EXISTS `mydb`.`Kayttaja` (
   `idKayttaja` INT NOT NULL AUTO_INCREMENT,
   `Etunimi` VARCHAR(45) NOT NULL,
   `Sukunimi` VARCHAR(45) NOT NULL,
   `Osoite` VARCHAR(100) NOT NULL,
   `Paikkakunta` VARCHAR(120) NOT NULL,
-  `Puhelinnnumero` VARCHAR(13) NOT NULL,
+  `Puhelinnumero` VARCHAR(13) NOT NULL,
   `Ika` INT(120) NOT NULL,
-  `tilaus` INT NULL,
-  `historia` INT NULL,
-  `saldo` DECIMAL NULL,
-  `kayttajatunus` VARCHAR(255) NULL,
-  `salasana` VARCHAR(256) NULL,
-  `kayttajacol` VARCHAR(45) NOT NULL,
+  `Tilaus` INT NULL,
+  `Historia` INT NULL,
+  `Saldo` DECIMAL NULL,
+  `Kayttajatunnus` VARCHAR(255) NULL,
+  `Salasana` VARCHAR(256) NULL,
+  `Rooli` ENUM('Omistaja', 'Asiakas') NOT NULL,
   PRIMARY KEY (`idKayttaja`),
-  UNIQUE INDEX `kayttajaId_UNIQUE` (`idKayttaja` ASC) VISIBLE,
-  INDEX `idTilaus_idx` (`tilaus` ASC) VISIBLE,
-  INDEX `idKuitti_idx` (`historia` ASC) VISIBLE,
-  UNIQUE INDEX `kayttajatunus_UNIQUE` (`kayttajatunus` ASC) VISIBLE,
-  UNIQUE INDEX `salasana_UNIQUE` (`salasana` ASC) VISIBLE,
-  CONSTRAINT `tilaukset`
-    FOREIGN KEY (`tilaus`)
+  UNIQUE INDEX `idKayttaja_UNIQUE` (`idKayttaja` ASC) VISIBLE,
+  INDEX `idTilaus_idx` (`Tilaus` ASC) VISIBLE,
+  INDEX `idKuitti_idx` (`Historia` ASC) VISIBLE,
+  UNIQUE INDEX `kayttajatunus_UNIQUE` (`kayttajatunnus` ASC) VISIBLE,
+  UNIQUE INDEX `salasana_UNIQUE` (`Salasana` ASC) VISIBLE,
+  CONSTRAINT `Tilaukset`
+    FOREIGN KEY (`Tilaus`)
     REFERENCES `mydb`.`Tilaus` (`idTilaus`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
-  CONSTRAINT `kuitit`
-    FOREIGN KEY (`historia`)
+  CONSTRAINT `Kuitit`
+    FOREIGN KEY (`Historia`)
     REFERENCES `mydb`.`Kuitti` (`idKuitti`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
+
+DROP USER IF EXISTS 'user_nimi'@'%';
+
+CREATE USER 'user_nimi'@'%' IDENTIFIED BY 'user_passwd';
+GRANT ALL PRIVILEGES ON mydb.* TO 'user_nimi'@'%';
+FLUSH PRIVILEGES;
 
 
 SET SQL_MODE=@OLD_SQL_MODE;
